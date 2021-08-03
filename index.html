@@ -164,10 +164,10 @@
         }
 
         function button_prev() {
-            update_graph(current_scene-1,current_area, covid_data);
+            update_graph(current_scene - 1, current_area, covid_data);
         }
         function button_next() {
-            update_graph(current_scene+1,current_area, covid_data);
+            update_graph(current_scene + 1, current_area, covid_data);
         }
 
         function update_graph(scene, area, data) {
@@ -177,7 +177,7 @@
             current_area = area;
 
             filtered_data = data.filter(function (d) { return d.location == area; })
-            
+
             console.log(filtered_data.length)
             console.log(filtered_data[0])
 
@@ -204,7 +204,7 @@
 
                 d3.select('.title')
                     .text("New Infections Over Time");
-                
+
                 svg.select(".y.label")
                     .attr("class", "y label")
                     .attr("text-anchor", "end")
@@ -238,7 +238,7 @@
                 d3.select('.title')
                     .text("New Vaccinated Over Time");
 
-              
+
                 svg.select(".y.label")
                     .attr("class", "y label")
                     .attr("text-anchor", "end")
@@ -250,7 +250,7 @@
 
             }
             else {
-                
+
                 document.getElementById("blurb").innerHTML = text3;
 
                 y = d3.scaleLinear().domain([0, d3.max(filtered_data, function (d) { return d.total_deaths_per_million; })]).range([height - margin.bottom, 0])
@@ -298,20 +298,12 @@
     <p id="blurb"></p>
     <select id="selectButton"></select>
 
-    <button id="prevButton" onclick="button_prev()">Previous</button> <button id="nextButton" onclick="button_next()">Next</button>
+    <button id="prevButton" onclick="button_prev()">Previous</button> <button id="nextButton"
+        onclick="button_next()">Next</button>
 
     <div id="my_graph"></div>
-
-
-
-
-
 
 
 </body>
 
 </html>
-<!-- 
-scene 1 blurb: Here we can see the total number of COVID-19 cases over time, with sharper increases at different times in different countries.
-scent2 blurb : Now, we can see vaccination rates around the world. "Western" nations have higher rates, but vaccinations have begun to stall in some countries
-scene 3 blurb: Finally, if we transition between countries which have relatively high vaccination rates, we can see that the deaths in those countries level out relative to the number of infections, likely due to vaccinated people lowering the number of deaths, even when infected. Countries with low vaccination rates are sadly more likely to see more deaths as the infection rates increase. -->
