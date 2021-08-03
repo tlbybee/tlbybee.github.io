@@ -200,10 +200,19 @@
                     .transition()
                     .duration(500)
                     .call(d3.axisLeft(y))
-                    .style('fill', 'red')
+                    .style('fill', 'none')
 
                 d3.select('.title')
                     .text("Confirmed Infections Over Time");
+                
+                svg.select(".y.label")
+                    .attr("class", "y label")
+                    .attr("text-anchor", "end")
+                    .attr("y", 15)
+                    //.attr("dy", ".75em")
+                    .style('fill', 'red')
+                    .attr("transform", "rotate(-90)")
+                    .text("Infections per million people");
 
             }
             else if (scene == 2) {
@@ -237,7 +246,7 @@
                     //.attr("dy", ".75em")
                     .style('fill', 'blue')
                     .attr("transform", "rotate(-90)")
-                    .text("Fully Vaccinated per 100 people");
+                    .text("Fully Vaccinated per100 people");
 
             }
             else {
