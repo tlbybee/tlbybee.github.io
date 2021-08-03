@@ -1,1 +1,345 @@
-hello lady
+<html>
+
+</style>
+
+<head>
+    <link rel="stylesheet" href="style.css">
+    <script src='https://d3js.org/d3.v5.min.js'></script>
+    <!-- initialize button to select area -->
+
+    <script>
+        var current_area = "World"; // start with World being the default selection of the graph
+
+        var current_scene = 1; //start at scene 1. scenes range from 1 to 3 
+        //get a list of all of the countries and larger areas in the dataset
+        var all_area_names = null;
+
+        var dates = null;
+        var origin_date = null;
+        var current_date = null;
+        //make initial graph
+        margin = { top: 30, right: 30, bottom: 100, left: 50 };
+        width = 1100 - margin.left - margin.right;
+        height = 800 - margin.top - margin.bottom;
+
+        //global line variable
+        // var line = null;
+        var x = d3.scaleTime().range([0, width]);
+        var y = d3.scaleLinear().range([height, 0]);
+        var svg = null;
+        var covid_data_raw = null;
+        var line = null;
+
+        var text1 = "Here we can see the total number of COVID-19 cases over time per 1 million residents, with sharper increases at different times in different countries. <br> Across the world, infections are starting to level off, but as of August 2021, some contries are seeing a resurgence of infections due to the delta variant.";
+        var text2 = "We can see people began to become fully vaccinated in early 2021, and their has been exponential growth in the number of fully vacinated since then.  <br>However, we can see some countries started vaccinating later than other and the rate of vaccination has slowed down in other countires.";
+        var text3 = "Finally, if we transition between countries which have relatively high vaccination rates, we can see that the deaths in those countries level out relative to the number of infections, <br>likely due to vaccinated people lowering the number of deaths, even when infected. Countries with low vaccination rates are sadly more likely to see more deaths as the infection rates increase.";
+
+
+
+        async function init() {
+            covid_data_raw = await d3.csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv?raw=true");
+            covid_data = covid_data_raw.map(function (d) {
+                return {
+                    date: d3.timeParse("%Y-%m-%d")(d.date),
+                    location: d.location,
+                    total_cases_per_million: +d.total_cases_per_million,
+                    total_vaccinations_per_hundred: +d.people_fully_vaccinated_per_hundred,
+                    total_deaths_per_million: +d.total_deaths_per_million,
+                    population: +d.population, //for tooltip
+                    total_cases: +d.total_cases, //for tooltip
+                    total_deaths: +d.total_deaths //for tooltip
+                }
+            });
+            console.log(covid_data.length);
+            console.log(covid_data[0]);
+
+
+            //get a list of all of the countries and larger areas in the dataset
+            all_area_names = d3.map(covid_data, function (d) { return d.location; }).keys().sort(function (a, b) { return d3.ascending(a, b); });
+            console.log(all_area_names);
+            dates = d3.extent(covid_data, function (d) { return d.date; });
+            origin_date = dates[0];
+            current_date = dates[1];
+            console.log(origin_date);
+            console.log(current_date);
+
+            filtered_data = covid_data.filter(function (d) { return d.location == current_area; })
+
+            //insert text blurb
+            document.getElementById("blurb").innerHTML = text1;
+
+            //make drop down menu
+            d3.select("#selectButton")
+                .selectAll('myOptions')
+                .data(all_area_names)
+                .enter()
+                .append('option')
+                .text(function (d) { return d; })
+                .attr("value", function (d) { return d; })
+                .property("selected", function (d) { return d == current_area; })
+
+            // update graph when drop down menu is changed
+            d3.select("#selectButton").on("change", function (d) {
+                var selectedOption = d3.select(this).property("value")
+                // run the updateChart function with this selected option
+                update_graph(current_scene, selectedOption, covid_data)
+            })
+
+            // d3.select("#prevButton").on("click", function (d) {
+            //     // var selectedOption = d3.select(this).property("value")
+            //     // run the updateChart function with this selected option
+            //     if(current_scene >1){
+            //         current_scene -= 1;
+            //         update_graph(current_scene, selectedOption, covid_data)
+            //     }
+            // })
+
+            // d3.select("nextButton").on("click", function (d) {
+            //     // var selectedOption = d3.select(this).property("value")
+            //     // run the updateChart function with this selected option
+            //     if(current_scene <3){
+            //         current_scene += 1;
+            //         update_graph(current_scene, selectedOption, covid_data)
+            //     }
+            // })
+
+
+            svg = d3.select("#my_graph")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            //make axes
+            x = d3.scaleTime().domain(dates).range([0, width]);
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(" + 0 + "," + 570 + ")")
+                .call(d3.axisBottom(x));
+
+            // var y_max = 
+            y = d3.scaleLinear().domain([0, d3.max(filtered_data, function (d) { return d.total_cases_per_million; })]).range([height - margin.bottom, 0])
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(d3.axisLeft(y));
+
+
+            var line = svg.append("g").append("path").datum(filtered_data)
+                .attr("d", d3.line()
+                    .x(function (d) { return x(d.date); })
+                    .y(function (d) { return y(d.total_cases_per_million); })
+                )
+                .attr("class", "line")
+                .attr("stroke", "red")
+                .style("stroke-width", 3)
+                .style("fill", "none")
+
+            svg.append("text")
+                .attr("class", "title")
+                .attr("x", (width / 2))
+                .attr("y", 0 - (margin.top / 2 - 25))
+                .attr("text-anchor", "middle")
+                .style("font-size", "24px")
+                .text("Confirmed Infections Over Time");
+
+            svg.append("text")
+                .attr("class", "x label")
+                .attr("text-anchor", "end")
+                .attr("x", width - 55)
+                .attr("y", height - margin.bottom - 5)
+                .text("Date")
+                .style('fill', 'blue');
+
+            svg.append("text")
+                .attr("class", "y label")
+                .attr("text-anchor", "end")
+                .attr("y", 15)
+                //.attr("dy", ".75em")
+                .style('fill', 'blue')
+                .attr("transform", "rotate(-90)")
+                .text("Infections per million people");
+
+
+        }
+
+        function button_prev() {
+            update_graph(current_scene-1,current_area, covid_data);
+        }
+        function button_next() {
+            update_graph(current_scene+1,current_area, covid_data);
+        }
+
+        function update_graph(scene, area, data) {
+            if (scene < 1) { scene = 1; }
+            else if (scene > 3) { scene = 3; }
+            current_scene = scene;
+            current_area = area;
+
+
+
+            filtered_data = data.filter(function (d) { return d.location == area; })
+            // filtered_data.forEach(function(d) { 
+            //     d.date = new Date(d.date);
+            //     d.location =  d.location;
+            //     d.total_cases_per_million = +d.total_cases_per_million;
+            //     d.total_vaccinations_per_hundred = +d.total_vaccinations_per_hundred;
+            //     d.total_deaths_per_million = +d.total_deaths_per_million;
+            //     d.population = +d.population; //for tooltip
+            //     d.total_cases = +d.total_cases; //for tooltip
+            //     d.total_deaths = +d.total_deaths //for tooltip
+            // });
+
+            console.log(filtered_data.length)
+            console.log(filtered_data[0])
+
+            if (scene == 1) {
+                document.getElementById("blurb").innerHTML = text1;
+
+                y = d3.scaleLinear().domain([0, d3.max(filtered_data, function (d) { return d.total_cases_per_million; })]).range([height - margin.bottom, 0])
+                var line = d3.select(".line").data([filtered_data])
+                    .transition()
+                    .duration(500)
+                    .attr("d", d3.line()
+                        .x(function (d) { return x(d.date); })
+                        .y(function (d) { return y(d.total_cases_per_million); }))
+                    .attr("stroke", "red")
+                    .style("stroke-width", 3)
+                    .style("fill", "none");
+
+                console.log(d3.max(filtered_data, function (d) { return d.total_cases_per_million; }));
+                d3.select(".y.axis")
+                    .transition()
+                    .duration(500)
+                    .call(d3.axisLeft(y))
+
+                d3.select('.title')
+                    .text("Confirmed Infections Over Time");
+
+            }
+            else if (scene == 2) {
+                // new_column = 'total_vaccinations_per_hundred';
+                // var line = d3.line()
+                //     .x(function (d) { return x(d.date); })
+                //     .y(function (d) { return y(d.total_vaccinations_per_hundred); });
+                // y.domain([0, d3.max(filtered_data, function (d) { return d.total_vaccinations_per_hundred; })]);
+
+                document.getElementById("blurb").innerHTML = text2;
+
+                y = d3.scaleLinear().domain([0, d3.max(filtered_data, function (d) { return d.total_vaccinations_per_hundred; })]).range([height - margin.bottom, 0])
+                var line = d3.select(".line").data([filtered_data])
+                    .transition()
+                    .duration(500)
+                    .attr("d", d3.line()
+                        .x(function (d) { return x(d.date); })
+                        .y(function (d) { return y(d.total_vaccinations_per_hundred); }))
+                    .attr("stroke", "blue")
+                    .style("stroke-width", 3)
+                    .style("fill", "none");
+
+                console.log(d3.max(filtered_data, function (d) { return d.total_vaccinations_per_hundred; }));
+                d3.select(".y.axis")
+                    .transition()
+                    .duration(500)
+                    .call(d3.axisLeft(y))
+
+                d3.select('.title')
+                    .text("Fully Vaccinated Over Time");
+
+                // svg.select(".x.label")
+                //     .attr("class", "x label")
+                //     .attr("text-anchor", "end")
+                //     .attr("x", width - 55)
+                //     .attr("y", height - margin.bottom - 5)
+                //     .text("Date")
+                //     .style('fill', 'blue');
+
+                svg.select(".y.label")
+                    .attr("class", "y label")
+                    .attr("text-anchor", "end")
+                    .attr("y", 15)
+                    //.attr("dy", ".75em")
+                    .style('fill', 'blue')
+                    .attr("transform", "rotate(-90)")
+                    .text("Fully Vaccinated 100 people");
+
+            }
+            else {
+                // new_column = 'total_deaths_per_million';
+                // var line = d3.line()
+                //     .x(function (d) { return x(d.date); })
+                //     .y(function (d) { return y(d.total_deaths_per_million); });
+                // y.domain([0, d3.max(filtered_data, function (d) { return d.total_deaths_per_million; })]);
+
+                document.getElementById("blurb").innerHTML = text3;
+
+                y = d3.scaleLinear().domain([0, d3.max(filtered_data, function (d) { return d.total_deaths_per_million; })]).range([height - margin.bottom, 0])
+                var line = d3.select(".line").data([filtered_data])
+                    .transition()
+                    .duration(500)
+                    .attr("d", d3.line()
+                        .x(function (d) { return x(d.date); })
+                        .y(function (d) { return y(d.total_deaths_per_million); }))
+                    .attr("stroke", "black")
+                    .style("stroke-width", 3)
+                    .style("fill", "none");
+
+                console.log(d3.max(filtered_data, function (d) { return d.total_deaths_per_million; }));
+                d3.select(".y.axis")
+                    .transition()
+                    .duration(500)
+                    .call(d3.axisLeft(y))
+
+                d3.select('.title')
+                    .text("COVID-19 Deaths Over Time");
+
+                // svg.append("text")
+                //     .attr("class", "x label")
+                //     .attr("text-anchor", "end")
+                //     .attr("x", width - 55)
+                //     .attr("y", height - margin.bottom - 5)
+                //     .text("Date")
+                //     .style('fill', 'blue');
+
+                svg.select(".y.label")
+                    //.attr("class", "y label")
+                    .attr("text-anchor", "end")
+                    .attr("y", 15)
+                    //.attr("dy", ".75em")
+                    .style('fill', 'blue')
+                    .attr("transform", "rotate(-90)")
+                    .text("Total Deaths per Million People");
+
+            }
+
+
+
+        }
+
+
+    </script>
+
+</head>
+
+<body onload='init()'>
+    <h1>COVID-19 and Vaccines Over Time</h1>
+    <p id="blurb"></p>
+    <select id="selectButton"></select>
+
+    <button id="prevButton" onclick="button_prev()">Previous</button> <button id="nextButton" onclick="button_next()">Next</button>
+
+    <div id="my_graph"></div>
+
+
+
+
+
+
+
+</body>
+
+</html>
+<!-- 
+scene 1 blurb: Here we can see the total number of COVID-19 cases over time, with sharper increases at different times in different countries.
+scent2 blurb : Now, we can see vaccination rates around the world. "Western" nations have higher rates, but vaccinations have begun to stall in some countries
+scene 3 blurb: Finally, if we transition between countries which have relatively high vaccination rates, we can see that the deaths in those countries level out relative to the number of infections, likely due to vaccinated people lowering the number of deaths, even when infected. Countries with low vaccination rates are sadly more likely to see more deaths as the infection rates increase. -->
