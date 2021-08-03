@@ -149,7 +149,7 @@
                 .attr("x", width - 55)
                 .attr("y", height - margin.bottom - 5)
                 .text("Date")
-                .style('fill', 'blue');
+                .style('fill', 'black');
 
             svg.append("text")
                 .attr("class", "y label")
@@ -176,20 +176,8 @@
             current_scene = scene;
             current_area = area;
 
-
-
             filtered_data = data.filter(function (d) { return d.location == area; })
-            // filtered_data.forEach(function(d) { 
-            //     d.date = new Date(d.date);
-            //     d.location =  d.location;
-            //     d.total_cases_per_million = +d.total_cases_per_million;
-            //     d.total_vaccinations_per_hundred = +d.total_vaccinations_per_hundred;
-            //     d.total_deaths_per_million = +d.total_deaths_per_million;
-            //     d.population = +d.population; //for tooltip
-            //     d.total_cases = +d.total_cases; //for tooltip
-            //     d.total_deaths = +d.total_deaths //for tooltip
-            // });
-
+            
             console.log(filtered_data.length)
             console.log(filtered_data[0])
 
@@ -212,18 +200,13 @@
                     .transition()
                     .duration(500)
                     .call(d3.axisLeft(y))
+                    .style('fill', 'red')
 
                 d3.select('.title')
                     .text("Confirmed Infections Over Time");
 
             }
             else if (scene == 2) {
-                // new_column = 'total_vaccinations_per_hundred';
-                // var line = d3.line()
-                //     .x(function (d) { return x(d.date); })
-                //     .y(function (d) { return y(d.total_vaccinations_per_hundred); });
-                // y.domain([0, d3.max(filtered_data, function (d) { return d.total_vaccinations_per_hundred; })]);
-
                 document.getElementById("blurb").innerHTML = text2;
 
                 y = d3.scaleLinear().domain([0, d3.max(filtered_data, function (d) { return d.total_vaccinations_per_hundred; })]).range([height - margin.bottom, 0])
@@ -246,14 +229,7 @@
                 d3.select('.title')
                     .text("Fully Vaccinated Over Time");
 
-                // svg.select(".x.label")
-                //     .attr("class", "x label")
-                //     .attr("text-anchor", "end")
-                //     .attr("x", width - 55)
-                //     .attr("y", height - margin.bottom - 5)
-                //     .text("Date")
-                //     .style('fill', 'blue');
-
+              
                 svg.select(".y.label")
                     .attr("class", "y label")
                     .attr("text-anchor", "end")
@@ -261,16 +237,11 @@
                     //.attr("dy", ".75em")
                     .style('fill', 'blue')
                     .attr("transform", "rotate(-90)")
-                    .text("Fully Vaccinated 100 people");
+                    .text("Fully Vaccinated per 100 people");
 
             }
             else {
-                // new_column = 'total_deaths_per_million';
-                // var line = d3.line()
-                //     .x(function (d) { return x(d.date); })
-                //     .y(function (d) { return y(d.total_deaths_per_million); });
-                // y.domain([0, d3.max(filtered_data, function (d) { return d.total_deaths_per_million; })]);
-
+                
                 document.getElementById("blurb").innerHTML = text3;
 
                 y = d3.scaleLinear().domain([0, d3.max(filtered_data, function (d) { return d.total_deaths_per_million; })]).range([height - margin.bottom, 0])
@@ -292,14 +263,6 @@
 
                 d3.select('.title')
                     .text("COVID-19 Deaths Over Time");
-
-                // svg.append("text")
-                //     .attr("class", "x label")
-                //     .attr("text-anchor", "end")
-                //     .attr("x", width - 55)
-                //     .attr("y", height - margin.bottom - 5)
-                //     .text("Date")
-                //     .style('fill', 'blue');
 
                 svg.select(".y.label")
                     //.attr("class", "y label")
